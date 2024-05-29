@@ -76,25 +76,70 @@ KillSignal=SIGUSR1
 [Install]
 WantedBy=multi-user.target
 EOF
+    # customize bluealsa-aplay.service
+    sudo tee /etc/systemd/system/bluealsa-aplay.service >/dev/null <<'EOF'
+[Unit]
+Description=BlueALSA player service
+Documentation=man:bluealsa-aplay(1)
+Requisite=dbus.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/bluealsa-aplay --pcm-buffer-time=135000 --pcm-period-time=33750 00:00:00:00:00:00
+Restart=on-failure
+
+# Sandboxing
+CapabilityBoundingSet=
+DeviceAllow=char-alsa rw
+DevicePolicy=closed
+IPAddressDeny=any
+LockPersonality=true
+MemoryDenyWriteExecute=true
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateUsers=true
+ProtectControlGroups=true
+ProtectHome=true
+ProtectHostname=true
+ProtectKernelLogs=true
+ProtectKernelModules=true
+ProtectKernelTunables=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+RestrictSUIDSGID=true
+SystemCallArchitectures=native
+SystemCallErrorNumber=EPERM
+SystemCallFilter=@system-service
+SystemCallFilter=~@resources @privileged
+UMask=0077
+
+[Install]
+WantedBy=bluetooth.target
+EOF
+
     sudo systemctl daemon-reload
+    sudo systemctl enable bluealsa-aplay
     sudo systemctl enable bt-agent@hci0.service
 
     # Bluetooth udev script
     sudo tee /usr/local/bin/bluetooth-udev >/dev/null <<'EOF'
 #!/bin/bash
-if [[ ! $NAME =~ ^\"([0-9A-F]{2}[:-]){5}([0-9A-F]{2})\"$ ]]; then exit 0; fi
 
 action=$(expr "$ACTION" : "\([a-zA-Z]\+\).*")
 
 if [ "$action" = "add" ]; then
     bluetoothctl discoverable off
     # disconnect wifi to prevent dropouts
-    #ifconfig wlan0 down &
+    systemctl stop rsplayer
+    ifconfig wlan0 down &
 fi
 
 if [ "$action" = "remove" ]; then
     # reenable wifi
-    #ifconfig wlan0 up &
+    ifconfig wlan0 up &
+    systemctl start rsplayer
     bluetoothctl discoverable on
 fi
 EOF
