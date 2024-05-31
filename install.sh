@@ -77,7 +77,7 @@ KillSignal=SIGUSR1
 WantedBy=multi-user.target
 EOF
     # customize bluealsa-aplay.service
-    sudo tee /etc/systemd/system/bluealsa-aplay.service >/dev/null <<'EOF'
+    sudo tee /etc/systemd/system/bluetooth.target.wants/bluealsa-aplay.service >/dev/null <<'EOF'
 [Unit]
 Description=BlueALSA player service
 Documentation=man:bluealsa-aplay(1)
@@ -146,7 +146,7 @@ EOF
     sudo chmod 755 /usr/local/bin/bluetooth-udev
 
     sudo tee /etc/udev/rules.d/99-bluetooth-udev.rules >/dev/null <<'EOF'
-SUBSYSTEM=="input", GROUP="input", MODE="0660"
+SUBSYSTEM=="bluetooth", GROUP="input", MODE="0660"
 KERNEL=="input[0-9]*", RUN+="/usr/local/bin/bluetooth-udev"
 EOF
 }
