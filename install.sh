@@ -132,22 +132,23 @@ action=$(expr "$ACTION" : "\([a-zA-Z]\+\).*")
 if [ "$action" = "add" ]; then
     bluetoothctl discoverable off
     # disconnect wifi to prevent dropouts
-    systemctl stop rsplayer
     ifconfig wlan0 down &
+    nmcli radio wifi off &
+
 fi
 
 if [ "$action" = "remove" ]; then
     # reenable wifi
+    nmcli radio wifi on
     ifconfig wlan0 up &
-    systemctl start rsplayer
     bluetoothctl discoverable on
 fi
 EOF
     sudo chmod 755 /usr/local/bin/bluetooth-udev
 
     sudo tee /etc/udev/rules.d/99-bluetooth-udev.rules >/dev/null <<'EOF'
-SUBSYSTEM=="bluetooth", GROUP="input", MODE="0660"
-KERNEL=="input[0-9]*", RUN+="/usr/local/bin/bluetooth-udev"
+SUBSYSTEM=="bluetooth", ACTION=="add", RUN+="/usr/local/bin/bluetooth-udev"
+SUBSYSTEM=="bluetooth", ACTION=="remove" , RUN+="/usr/local/bin/bluetooth-udev"
 EOF
 }
 
