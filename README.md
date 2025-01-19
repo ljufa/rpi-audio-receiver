@@ -1,3 +1,11 @@
+# Important notes!: 
+* In RPI triggerhappy is broken so it must be uninstalled in order to make udev trigger script correctly: `sudo apt remove triggerhappy`
+
+* Debug script by:
+  *  adding `| logger` to echo commands
+  * use `journalctl -u systemd-udevd -f` to see output
+
+
 # Raspberry Pi Audio Receiver
 
 A simple, light weight audio receiver with Bluetooth (A2DP), AirPlay 2, and Spotify Connect.
